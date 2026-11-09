@@ -1,0 +1,35 @@
+# Secrets & local configuration — never commit
+backend/.env
+.env
+launcher.env
+*.key
+
+# Local health data (database, uploads, backups)
+backend/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Runtime
+.run/
+logs/
+.setup_complete
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+*.tsbuildinfo
+
+# OS / editors
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
