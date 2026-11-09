@@ -257,6 +257,17 @@ Ports are configurable — see [INSTALLATION.md](INSTALLATION.md#changing-ports)
 
 A full walkthrough of every screen is in the **[User Guide](USER_GUIDE.md)**.
 
+### Try it with demo data
+
+With the app running, create a demo account filled with ~13 months of **synthetic** data
+(measurements, symptoms, medications, appointments and sample PDFs):
+
+```bash
+cd backend && .venv/bin/python scripts/seed_demo.py
+```
+
+The demo login is saved to `backend/data/demo_account.txt`. Run the same command with `--delete` to remove it.
+
 ---
 
 ## 🏗 Architecture

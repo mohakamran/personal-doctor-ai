@@ -19,6 +19,14 @@ doctor. It won't diagnose you, prescribe, or change medication, and it doesn't r
 
    OpenAI charges your account for API usage. Use **Remove API key** at any time.
 
+## Demo data
+To explore the app without entering your own information, start the app and run
+`cd backend && .venv/bin/python scripts/seed_demo.py`. It creates a separate account for a fictional person
+("Alex Morgan") with about 13 months of synthetic measurements (some in lb and mmol/L to show unit
+conversion), symptoms, medications, appointments and three sample PDFs. The login is saved in
+`backend/data/demo_account.txt`. Remove it with `scripts/seed_demo.py --delete`. AI features are not
+configured in the demo account — add your own key in Settings if you want to try them.
+
 ## Dashboard
 A summary of what *you* have recorded: profile completion, weight and BMI, latest blood pressure, heart rate
 and sleep, charts, recent symptoms, active medications, recent conversations and upcoming appointments.
