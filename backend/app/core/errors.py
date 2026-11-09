@@ -32,7 +32,13 @@ def _body(code: str, message: str, details: Any = None) -> dict:
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError):
-        return JSONResponse(status_code=exc.status_code, content=_body(exc.code, exc.message, exc.details))
+        resp = JSONResponse(status_code=exc.status_code, content=_body(exc.code, exc.message, exc.details))
+        if exc.code == "not_authenticated":
+            # Clear stale/expired session cookies so the browser starts clean on the sign-in page.
+            from app.security.tokens import CSRF_COOKIE, SESSION_COOKIE
+            resp.delete_cookie(SESSION_COOKIE, path="/")
+            resp.delete_cookie(CSRF_COOKIE, path="/")
+        return resp
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError):

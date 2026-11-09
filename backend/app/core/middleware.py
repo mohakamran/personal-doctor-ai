@@ -5,16 +5,23 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.security.tokens import CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE, csrf_matches
+from app.security.tokens import (
+    CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE, csrf_matches, decode_access_token,
+)
 
 UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
+# Pre-authentication endpoints: they act on credentials in the body, not on an existing session,
+# so a stale/expired session cookie must never block them. SameSite=Strict still applies.
+CSRF_EXEMPT = {"/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/logout"}
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):
-    """Unsafe requests that carry a session cookie must echo the CSRF cookie in a header."""
+    """Unsafe requests made with a *valid* session cookie must echo the CSRF cookie in a header."""
 
     async def dispatch(self, request: Request, call_next):
-        if request.method in UNSAFE and request.cookies.get(SESSION_COOKIE):
+        session = request.cookies.get(SESSION_COOKIE)
+        if (request.method in UNSAFE and session and request.url.path not in CSRF_EXEMPT
+                and decode_access_token(session)):
             if not csrf_matches(request.cookies.get(CSRF_COOKIE), request.headers.get(CSRF_HEADER)):
                 return JSONResponse(
                     status_code=403,

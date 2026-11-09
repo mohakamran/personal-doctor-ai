@@ -95,3 +95,33 @@ def test_change_password_and_delete_account(client):
     r = client.request("DELETE", "/api/v1/auth/account", json={"password": "NewPassw0rd99", "confirm": "DELETE"})
     assert r.status_code == 200
     assert client.get("/api/v1/auth/me").status_code == 401
+
+
+def test_stale_session_cookie_never_blocks_login_or_register():
+    """Regression: an expired/invalid session cookie without a CSRF cookie must not block sign-in."""
+    u = register(new_client())
+    c = new_client()
+    c.cookies.set("pdai_session", "stale.invalid.token")
+    r = c.post("/api/v1/auth/login", json={"email": u["email"], "password": u["password"]})
+    assert r.status_code == 200, r.text
+    c2 = new_client()
+    c2.cookies.set("pdai_session", "stale.invalid.token")
+    r = c2.post("/api/v1/auth/register", json={"email": "fresh-" + u["email"], "password": "Abcdefgh12", "display_name": "F"})
+    assert r.status_code == 201, r.text
+
+
+def test_valid_session_still_requires_csrf_for_login():
+    """Logging in while already signed in is allowed (exempt), but other writes still need CSRF."""
+    c = new_client()
+    u = register(c)
+    c.headers.pop("X-CSRF-Token")
+    assert c.post("/api/v1/auth/login", json={"email": u["email"], "password": u["password"]}).status_code == 200
+    assert c.put("/api/v1/profile", json={"full_name": "X"}).status_code == 403
+
+
+def test_unauthenticated_response_clears_stale_cookies():
+    c = new_client()
+    c.cookies.set("pdai_session", "stale.invalid.token")
+    r = c.get("/api/v1/auth/me")
+    assert r.status_code == 401
+    assert any("pdai_session=" in h and ("Max-Age=0" in h or "expires=" in h.lower()) for h in r.headers.get_list("set-cookie"))
